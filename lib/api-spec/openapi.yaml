@@ -1,22 +1,29 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Smart Grocery & Expiry Tracker API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: items
+    description: Grocery item operations
+  - name: receipts
+    description: Receipt scanning operations
+  - name: recipes
+    description: AI recipe generation
+  - name: analytics
+    description: Waste analytics
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +31,170 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /items:
+    get:
+      operationId: listItems
+      tags: [items]
+      summary: List all grocery items
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [active, consumed, wasted]
+      responses:
+        "200":
+          description: List of items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Item"
+    post:
+      operationId: createItem
+      tags: [items]
+      summary: Add a new grocery item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateItemRequest"
+      responses:
+        "201":
+          description: Item created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Item"
+
+  /items/{id}:
+    get:
+      operationId: getItem
+      tags: [items]
+      summary: Get a single item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Item found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Item"
+        "404":
+          description: Item not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateItem
+      tags: [items]
+      summary: Update item status or details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateItemRequest"
+      responses:
+        "200":
+          description: Item updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Item"
+        "404":
+          description: Item not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteItem
+      tags: [items]
+      summary: Delete an item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Item deleted
+
+  /items/scan:
+    post:
+      operationId: scanReceipt
+      tags: [receipts]
+      summary: Upload and scan a receipt image (OCR pipeline)
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+              required:
+                - file
+      responses:
+        "200":
+          description: Scanned items extracted from receipt
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScanReceiptResponse"
+
+  /recipes/generate:
+    post:
+      operationId: generateRecipes
+      tags: [recipes]
+      summary: Generate recipe suggestions from expiring ingredients
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateRecipesRequest"
+      responses:
+        "200":
+          description: Recipe suggestions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenerateRecipesResponse"
+
+  /analytics/waste:
+    get:
+      operationId: getWasteAnalytics
+      tags: [analytics]
+      summary: Get waste avoided analytics and gamification metrics
+      responses:
+        "200":
+          description: Waste analytics data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WasteAnalytics"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +205,205 @@ components:
       required:
         - status
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    Item:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        category:
+          type: string
+        quantity:
+          type: number
+        unit:
+          type: string
+        purchaseDate:
+          type: string
+          format: date
+        expiryDate:
+          type: string
+          format: date
+        status:
+          type: string
+          enum: [active, consumed, wasted]
+        estimatedCost:
+          type: number
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - category
+        - quantity
+        - unit
+        - expiryDate
+        - status
+        - createdAt
+        - updatedAt
+
+    CreateItemRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        category:
+          type: string
+        quantity:
+          type: number
+        unit:
+          type: string
+        purchaseDate:
+          type: string
+          format: date
+        expiryDate:
+          type: string
+          format: date
+        estimatedCost:
+          type: number
+      required:
+        - name
+        - category
+        - quantity
+        - unit
+        - expiryDate
+
+    UpdateItemRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        category:
+          type: string
+        quantity:
+          type: number
+        unit:
+          type: string
+        expiryDate:
+          type: string
+          format: date
+        status:
+          type: string
+          enum: [active, consumed, wasted]
+        estimatedCost:
+          type: number
+
+    ScanReceiptResponse:
+      type: object
+      properties:
+        receiptId:
+          type: integer
+        extractedItems:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              quantity:
+                type: number
+              unit:
+                type: string
+              estimatedCost:
+                type: number
+            required:
+              - name
+              - quantity
+              - unit
+        message:
+          type: string
+      required:
+        - receiptId
+        - extractedItems
+        - message
+
+    GenerateRecipesRequest:
+      type: object
+      properties:
+        expiringItems:
+          type: array
+          items:
+            type: string
+      required:
+        - expiringItems
+
+    RecipeSuggestion:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        ingredients:
+          type: array
+          items:
+            type: string
+        cookTime:
+          type: string
+        difficulty:
+          type: string
+      required:
+        - name
+        - description
+        - ingredients
+        - cookTime
+        - difficulty
+
+    GenerateRecipesResponse:
+      type: object
+      properties:
+        recipes:
+          type: array
+          items:
+            $ref: "#/components/schemas/RecipeSuggestion"
+        expiringItems:
+          type: array
+          items:
+            type: string
+      required:
+        - recipes
+        - expiringItems
+
+    WasteAnalytics:
+      type: object
+      properties:
+        totalConsumed:
+          type: integer
+        totalWasted:
+          type: integer
+        totalActive:
+          type: integer
+        moneySaved:
+          type: number
+        moneyWasted:
+          type: number
+        carbonSaved:
+          type: number
+        wasteAvoidanceRate:
+          type: number
+        streak:
+          type: integer
+        level:
+          type: string
+      required:
+        - totalConsumed
+        - totalWasted
+        - totalActive
+        - moneySaved
+        - moneyWasted
+        - carbonSaved
+        - wasteAvoidanceRate
+        - streak
+        - level

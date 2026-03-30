@@ -1,0 +1,45 @@
+Act as a Lead Full-Stack Architect and Expert Developer. I am building a complete MVP for a 'Smart Grocery & Expiry Tracker' web application for a 15-day hackathon sprint. I need you to design the architecture, define the folder structure, and write the core, foundational code for the entire full-stack application.
+
+The Tech Stack:
+
+Frontend: Next.js (React), Tailwind CSS.
+
+Backend: Python, FastAPI.
+
+Database: PostgreSQL (using SQLAlchemy or asyncpg).
+
+Integrations: Placeholders for an OCR library (like Tesseract/Cloud Vision) and a Generative AI API.
+
+Core Features to Implement:
+
+The Digital Fridge (Inventory): A dashboard displaying groceries. Items expiring within 3 days must be visually flagged (e.g., color-coded red/yellow).
+
+Frictionless Entry: An endpoint and frontend modal for uploading receipt images (stub out the OCR logic, but build the pipeline).
+
+AI Sous-Chef: An endpoint that takes expiring ingredients and generates recipe suggestions. Assume the user has standard Indian pantry staples (turmeric, cumin, rice, atta, oil) to ensure suggestions are culturally relevant and highly practical.
+
+Gamified Analytics: A basic tracking metric showing 'Waste Avoided' (calculating estimated money saved or carbon footprint reduced when items are marked 'consumed' instead of 'wasted').
+
+Please provide the response in the following structured format:
+
+Part 1: The Architecture & Folder Structure
+
+Provide a clean, standard directory tree for both the frontend/ and backend/ repositories.
+
+Part 2: The Database (PostgreSQL)
+
+Provide the SQLAlchemy models (or pure SQL schema) for Users, Items (must include expiry_date and status like active/consumed/wasted), and Receipts.
+
+Part 3: The Backend (FastAPI)
+
+Write the main.py setup including CORS middleware.
+
+Write the core API routers/endpoints: GET /items, POST /items/scan (receipt upload stub), and POST /recipes/generate. Include Pydantic models for validation. Keep the code clean, modular, and well-commented for a CS undergrad level.
+
+Part 4: The Frontend (Next.js + Tailwind)
+
+Write the code for the main Dashboard component. Include the logic to fetch items from the FastAPI backend and render them with the color-coded expiration logic.
+
+Write a simple UI component for the 'Waste Avoided' gamification metric.
+
+Prioritize robust, scalable code over styling minutiae. Let's build this!"

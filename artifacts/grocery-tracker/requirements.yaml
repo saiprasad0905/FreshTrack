@@ -1,0 +1,20 @@
+packages:
+  "framer-motion": "Animations for cards, dialogs, and page transitions"
+  "recharts": "Beautiful charts for waste analytics"
+  "date-fns": "Date formatting and expiry calculations"
+  "react-hook-form": "Form handling for adding/editing items"
+  "@hookform/resolvers": "Zod validation integration for forms"
+  "clsx": "Classname merging utility"
+  "tailwind-merge": "Tailwind class merging utility"
+
+images:
+  - path: "artifacts/grocery-tracker/public/images/empty-fridge.png"
+    description: "A clean, modern, flat vector illustration of an open, empty refrigerator with soft green and warm orange accents, friendly and approachable style"
+    aspect_ratio: "1:1"
+  - path: "artifacts/grocery-tracker/public/images/eco-badge.png"
+    description: "A beautiful, premium 3D icon of a green glowing leaf shield representing an Eco Warrior badge, soft lighting, transparent background"
+    aspect_ratio: "1:1"
+
+notes:
+  - The API endpoints use `@workspace/api-client-react` generated hooks
+  - API only supports single item creation, so bulk receipt scan adding will use Promise.all
