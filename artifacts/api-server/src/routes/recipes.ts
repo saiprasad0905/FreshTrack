@@ -1,4 +1,6 @@
 import { Router, type IRouter, type Request, type Response } from "express";
+import { db, itemsTable } from "@workspace/db";
+import { eq, and, lte, gte } from "drizzle-orm";
 
 const router: IRouter = Router();
 
@@ -358,10 +360,36 @@ function resolveIngredientKey(itemName: string): string | null {
 // POST /recipes/generate - generate recipe suggestions based on expiring items
 router.post("/recipes/generate", async (req: Request, res: Response) => {
   try {
-    const { expiringItems } = req.body as { expiringItems: string[] };
+    // Always query the DB for active items expiring within 3 days — this is the source of truth.
+    // The frontend-supplied expiringItems are used as supplementary context only.
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const cutoff = new Date(today);
+    cutoff.setDate(today.getDate() + 3);
 
-    if (!Array.isArray(expiringItems) || expiringItems.length === 0) {
-      res.status(400).json({ error: "expiringItems must be a non-empty array of strings" });
+    const dbExpiringItems = await db
+      .select({ name: itemsTable.name })
+      .from(itemsTable)
+      .where(
+        and(
+          eq(itemsTable.status, "active"),
+          lte(itemsTable.expiryDate, cutoff.toISOString().split("T")[0]!)
+        )
+      );
+
+    // Merge DB items with any extras from the frontend, deduplicated by name
+    const frontendItems: string[] = Array.isArray(req.body?.expiringItems)
+      ? req.body.expiringItems
+      : [];
+
+    const allNamesSet = new Set<string>([
+      ...dbExpiringItems.map((i) => i.name),
+      ...frontendItems,
+    ]);
+    const expiringItems = Array.from(allNamesSet);
+
+    if (expiringItems.length === 0) {
+      res.json({ recipes: [], expiringItems: [] });
       return;
     }
 

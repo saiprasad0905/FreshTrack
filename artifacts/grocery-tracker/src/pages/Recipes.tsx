@@ -9,6 +9,8 @@ export function Recipes() {
   const { data: items = [] } = useItemsQuery('active');
   const generateMutation = useGenerateRecipesMutation();
   const [recipeData, setRecipeData] = useState<GenerateRecipesResponse | null>(null);
+  // Track the item names used in the last generation so we can detect new additions
+  const [lastGeneratedFor, setLastGeneratedFor] = useState<string | null>(null);
 
   // Find items expiring within 3 days.
   // Use parseISO + startOfToday to avoid UTC/local timezone mismatch on date strings.
@@ -24,10 +26,20 @@ export function Recipes() {
     .sort((a, b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime())
     .map(item => item.name);
 
+  // Detect if new expiring items have been added since last generation
+  const currentKey = expiringItems.slice().sort().join(',');
+  const hasNewItems = recipeData !== null && lastGeneratedFor !== null && currentKey !== lastGeneratedFor;
+
   const handleGenerate = () => {
+    // Send empty array — the backend always queries the DB directly for freshness
     generateMutation.mutate(
-      { expiringItems },
-      { onSuccess: (data) => setRecipeData(data) }
+      { expiringItems: [] },
+      {
+        onSuccess: (data) => {
+          setRecipeData(data);
+          setLastGeneratedFor(currentKey);
+        }
+      }
     );
   };
 
@@ -50,13 +62,21 @@ export function Recipes() {
               We found {expiringItems.length} items in your fridge that need to be used soon. Let our AI chef create perfect recipes for you.
             </p>
             
+            {hasNewItems && (
+              <div className="mb-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-yellow-400/90 text-yellow-900 font-semibold text-sm shadow">
+                ✦ New items added — regenerate to update recipes
+              </div>
+            )}
+
             <button
               onClick={handleGenerate}
-              disabled={generateMutation.isPending || expiringItems.length === 0}
+              disabled={generateMutation.isPending}
               className="bg-white text-primary px-8 py-4 rounded-2xl font-bold text-lg shadow-xl hover:shadow-2xl hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100 transition-all flex items-center gap-3"
             >
               {generateMutation.isPending ? (
                 <>Thinking...</>
+              ) : recipeData ? (
+                <>Regenerate Recipes <ChefHat className="w-5 h-5" /></>
               ) : (
                 <>Generate Recipes <ChefHat className="w-5 h-5" /></>
               )}
