@@ -1,4 +1,4 @@
-import { useQueryClient, useMutation, useQuery } from "@tanstack/react-query";
+import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { 
   useListItems, 
   getListItemsQueryKey,
@@ -11,7 +11,7 @@ import {
 } from "@workspace/api-client-react";
 
 export function useItemsQuery(status?: ListItemsStatus) {
-  return useListItems({ status });
+  return useListItems({ status }, { staleTime: 0, refetchOnMount: true });
 }
 
 export function useCreateItemMutation() {

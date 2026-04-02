@@ -3,7 +3,6 @@ import { Sparkles, ChefHat, Clock, Flame } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useItemsQuery } from "@/hooks/use-items";
 import { useGenerateRecipesMutation } from "@/hooks/use-recipes";
-import { differenceInDays } from "date-fns";
 import type { GenerateRecipesResponse } from "@workspace/api-client-react";
 
 export function Recipes() {
@@ -11,10 +10,18 @@ export function Recipes() {
   const generateMutation = useGenerateRecipesMutation();
   const [recipeData, setRecipeData] = useState<GenerateRecipesResponse | null>(null);
 
-  // Find items expiring within 4 days
-  const today = new Date();
+  // Find items expiring within 3 days.
+  // Use parseISO + startOfToday to avoid UTC/local timezone mismatch on date strings.
+  const { parseISO, startOfToday } = { parseISO: (s: string) => { const [y,m,d] = s.split('-').map(Number); return new Date(y!, m! - 1, d!); }, startOfToday: () => { const t = new Date(); t.setHours(0,0,0,0); return t; } };
+  const todayStart = startOfToday();
   const expiringItems = items
-    .filter(item => differenceInDays(new Date(item.expiryDate), today) <= 4)
+    .filter(item => {
+      const expiry = parseISO(item.expiryDate);
+      const diffMs = expiry.getTime() - todayStart.getTime();
+      const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+      return diffDays <= 3;
+    })
+    .sort((a, b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime())
     .map(item => item.name);
 
   const handleGenerate = () => {
