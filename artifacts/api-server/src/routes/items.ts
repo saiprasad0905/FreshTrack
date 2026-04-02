@@ -1,8 +1,15 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, itemsTable, insertItemSchema, updateItemSchema } from "@workspace/db";
-import { eq, and } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import multer from "multer";
-import { z } from "zod";
+
+// Drizzle numeric columns expect strings. Pre-process the body so numbers become strings.
+function coerceNumericFields(body: Record<string, unknown>) {
+  const result = { ...body };
+  if (result["quantity"] !== undefined) result["quantity"] = String(result["quantity"]);
+  if (result["estimatedCost"] !== undefined) result["estimatedCost"] = String(result["estimatedCost"]);
+  return result;
+}
 
 const router: IRouter = Router();
 
@@ -48,7 +55,7 @@ router.get("/items", async (req: Request, res: Response) => {
 // POST /items - create a new item
 router.post("/items", async (req: Request, res: Response) => {
   try {
-    const parsed = insertItemSchema.safeParse(req.body);
+    const parsed = insertItemSchema.safeParse(coerceNumericFields(req.body));
     if (!parsed.success) {
       res.status(400).json({ error: "Invalid request body", details: parsed.error.issues });
       return;
@@ -121,7 +128,7 @@ router.patch("/items/:id", async (req: Request, res: Response) => {
       return;
     }
 
-    const parsed = updateItemSchema.safeParse(req.body);
+    const parsed = updateItemSchema.safeParse(coerceNumericFields(req.body));
     if (!parsed.success) {
       res.status(400).json({ error: "Invalid request body", details: parsed.error.issues });
       return;
