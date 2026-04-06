@@ -1,67 +1,70 @@
 import { useState } from "react";
-import { Sparkles, ChefHat, Clock, Flame } from "lucide-react";
+import { Sparkles, ChefHat, Clock, Flame, ChevronDown, ChevronUp, ShoppingBasket, ListOrdered } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useItemsQuery } from "@/hooks/use-items";
 import { useGenerateRecipesMutation } from "@/hooks/use-recipes";
 import type { GenerateRecipesResponse } from "@workspace/api-client-react";
 
+type RecipeWithSteps = GenerateRecipesResponse["recipes"][number] & { steps?: string[] };
+
 export function Recipes() {
   const { data: items = [] } = useItemsQuery('active');
   const generateMutation = useGenerateRecipesMutation();
   const [recipeData, setRecipeData] = useState<GenerateRecipesResponse | null>(null);
-  // Track the item names used in the last generation so we can detect new additions
   const [lastGeneratedFor, setLastGeneratedFor] = useState<string | null>(null);
+  const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
 
-  // Find items expiring within 3 days.
-  // Use parseISO + startOfToday to avoid UTC/local timezone mismatch on date strings.
-  const { parseISO, startOfToday } = { parseISO: (s: string) => { const [y,m,d] = s.split('-').map(Number); return new Date(y!, m! - 1, d!); }, startOfToday: () => { const t = new Date(); t.setHours(0,0,0,0); return t; } };
-  const todayStart = startOfToday();
+  const parseDate = (s: string) => { const [y, m, d] = s.split('-').map(Number); return new Date(y!, m! - 1, d!); };
+  const todayStart = (() => { const t = new Date(); t.setHours(0, 0, 0, 0); return t; })();
+
   const expiringItems = items
     .filter(item => {
-      const expiry = parseISO(item.expiryDate);
-      const diffMs = expiry.getTime() - todayStart.getTime();
-      const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+      const diffDays = Math.ceil((parseDate(item.expiryDate).getTime() - todayStart.getTime()) / 86400000);
       return diffDays <= 3;
     })
     .sort((a, b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime())
     .map(item => item.name);
 
-  // Detect if new expiring items have been added since last generation
   const currentKey = expiringItems.slice().sort().join(',');
   const hasNewItems = recipeData !== null && lastGeneratedFor !== null && currentKey !== lastGeneratedFor;
 
   const handleGenerate = () => {
-    // Send empty array — the backend always queries the DB directly for freshness
     generateMutation.mutate(
       { expiringItems: [] },
       {
         onSuccess: (data) => {
           setRecipeData(data);
           setLastGeneratedFor(currentKey);
+          setExpandedIdx(null);
         }
       }
     );
   };
 
+  const toggleSteps = (idx: number) => setExpandedIdx(prev => prev === idx ? null : idx);
+
   return (
     <AppLayout>
       <div className="max-w-4xl mx-auto">
+        {/* Hero banner */}
         <div className="bg-gradient-to-br from-primary to-emerald-600 rounded-[2.5rem] p-8 md:p-12 text-white shadow-2xl shadow-primary/20 mb-12 relative overflow-hidden">
           <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
             <ChefHat className="w-64 h-64 -rotate-12" />
           </div>
-          
+
           <div className="relative z-10">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/20 backdrop-blur-md border border-white/10 font-medium mb-6">
               <Sparkles className="w-4 h-4" /> AI Magic Kitchen
             </div>
             <h1 className="text-4xl md:text-5xl font-display font-bold mb-4 leading-tight">
-              Cook your ingredients <br/> before they go bad.
+              Cook your ingredients <br /> before they go bad.
             </h1>
             <p className="text-primary-foreground/80 text-lg max-w-xl mb-8">
-              We found {expiringItems.length} items in your fridge that need to be used soon. Let our AI chef create perfect recipes for you.
+              {expiringItems.length > 0
+                ? `We found ${expiringItems.length} item${expiringItems.length > 1 ? 's' : ''} in your fridge that need to be used soon.`
+                : "Add items to your fridge and we'll suggest recipes to use them up!"}
             </p>
-            
+
             {hasNewItems && (
               <div className="mb-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-yellow-400/90 text-yellow-900 font-semibold text-sm shadow">
                 ✦ New items added — regenerate to update recipes
@@ -84,6 +87,7 @@ export function Recipes() {
           </div>
         </div>
 
+        {/* Pre-generate expiring items preview */}
         {expiringItems.length > 0 && !recipeData && !generateMutation.isPending && (
           <div className="mb-12">
             <h3 className="font-display font-semibold text-lg mb-4 text-foreground">Ingredients we'll use:</h3>
@@ -104,44 +108,96 @@ export function Recipes() {
           </div>
         )}
 
+        {/* Recipe cards */}
         {recipeData && (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-500">
             <h2 className="text-2xl font-display font-bold text-foreground">Suggested Recipes</h2>
             <div className="grid gap-6">
-              {recipeData.recipes.map((recipe, idx) => (
-                <div key={idx} className="bg-card border border-border rounded-3xl p-6 shadow-lg shadow-black/5 hover:shadow-xl transition-all">
-                  <div className="flex flex-col md:flex-row justify-between items-start gap-4 mb-6">
-                    <div>
-                      <h3 className="text-2xl font-display font-bold text-primary mb-2">{recipe.name}</h3>
-                      <p className="text-muted-foreground">{recipe.description}</p>
-                    </div>
-                    <div className="flex gap-2 shrink-0">
-                      <div className="flex items-center gap-1.5 px-3 py-1.5 bg-muted rounded-lg text-sm font-semibold">
-                        <Clock className="w-4 h-4 text-muted-foreground" /> {recipe.cookTime}
+              {(recipeData.recipes as RecipeWithSteps[]).map((recipe, idx) => {
+                const isExpanded = expandedIdx === idx;
+                return (
+                  <div
+                    key={idx}
+                    className="bg-card border border-border rounded-3xl overflow-hidden shadow-lg shadow-black/5 hover:shadow-xl transition-all"
+                  >
+                    {/* Card header */}
+                    <div className="p-6">
+                      <div className="flex flex-col md:flex-row justify-between items-start gap-4 mb-6">
+                        <div>
+                          <h3 className="text-2xl font-display font-bold text-primary mb-2">{recipe.name}</h3>
+                          <p className="text-muted-foreground">{recipe.description}</p>
+                        </div>
+                        <div className="flex gap-2 shrink-0">
+                          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-muted rounded-lg text-sm font-semibold">
+                            <Clock className="w-4 h-4 text-muted-foreground" /> {recipe.cookTime}
+                          </div>
+                          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-100 text-orange-700 rounded-lg text-sm font-semibold">
+                            <Flame className="w-4 h-4" /> {recipe.difficulty}
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-100 text-orange-700 rounded-lg text-sm font-semibold">
-                        <Flame className="w-4 h-4" /> {recipe.difficulty}
-                      </div>
-                    </div>
-                  </div>
 
-                  <div>
-                    <h4 className="font-semibold mb-3 text-foreground">You'll need:</h4>
-                    <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                      {recipe.ingredients.map((ing, i) => {
-                        const isExpiring = recipeData.expiringItems.some(exp => ing.toLowerCase().includes(exp.toLowerCase()));
-                        return (
-                          <li key={i} className="flex items-center gap-2 text-sm text-foreground">
-                            <div className={`w-2 h-2 rounded-full ${isExpiring ? 'bg-destructive' : 'bg-primary'}`} />
-                            {ing}
-                            {isExpiring && <span className="text-xs bg-destructive/10 text-destructive px-2 py-0.5 rounded-md font-bold ml-1">Use it up!</span>}
-                          </li>
-                        );
-                      })}
-                    </ul>
+                      {/* Ingredients */}
+                      <div className="mb-5">
+                        <h4 className="flex items-center gap-2 font-semibold mb-3 text-foreground">
+                          <ShoppingBasket className="w-4 h-4 text-primary" /> You'll need:
+                        </h4>
+                        <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                          {recipe.ingredients.map((ing, i) => {
+                            const isExpiring = recipeData.expiringItems.some(
+                              exp => ing.toLowerCase().includes(exp.toLowerCase())
+                            );
+                            return (
+                              <li key={i} className="flex items-center gap-2 text-sm text-foreground">
+                                <div className={`w-2 h-2 rounded-full shrink-0 ${isExpiring ? 'bg-orange-500' : 'bg-primary'}`} />
+                                {ing}
+                                {isExpiring && (
+                                  <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-md font-bold ml-1 shrink-0">
+                                    Use it up!
+                                  </span>
+                                )}
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </div>
+
+                      {/* Toggle button */}
+                      {recipe.steps && recipe.steps.length > 0 && (
+                        <button
+                          onClick={() => toggleSteps(idx)}
+                          className="w-full flex items-center justify-between px-4 py-3 rounded-2xl bg-primary/5 hover:bg-primary/10 text-primary font-semibold transition-colors"
+                        >
+                          <span className="flex items-center gap-2">
+                            <ListOrdered className="w-4 h-4" />
+                            {isExpanded ? "Hide cooking steps" : "How to cook"}
+                          </span>
+                          {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Steps — expandable */}
+                    {isExpanded && recipe.steps && (
+                      <div className="border-t border-border bg-muted/30 px-6 py-5 animate-in slide-in-from-top-2 duration-200">
+                        <h4 className="flex items-center gap-2 font-semibold mb-4 text-foreground">
+                          <ListOrdered className="w-4 h-4 text-primary" /> Step-by-step instructions
+                        </h4>
+                        <ol className="space-y-3">
+                          {recipe.steps.map((step, si) => (
+                            <li key={si} className="flex gap-4 text-sm text-foreground">
+                              <span className="flex-shrink-0 w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-xs">
+                                {si + 1}
+                              </span>
+                              <span className="pt-1 leading-relaxed">{step}</span>
+                            </li>
+                          ))}
+                        </ol>
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
