@@ -64,8 +64,8 @@ export function ItemCard({ item, onConsume, onWaste, onDelete }: ItemCardProps) 
     };
   } else if (daysUntilExpiry <= 3) {
     statusConfig = {
-      color: "bg-warning/10 text-warning-foreground border-warning/20",
-      shadow: "shadow-warning/10",
+      color: "bg-orange-100 text-orange-700 border-orange-300",
+      shadow: "shadow-orange-900/10",
       icon: <Clock className="w-4 h-4" />,
       label: `${daysUntilExpiry} days left`
     };
