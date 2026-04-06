@@ -40,6 +40,8 @@ const INGREDIENT_ALIASES: Record<string, string[]> = {
   corn:        ["corn", "sweet corn", "maize"],
   green_chili: ["green chili", "green chilli", "hari mirch"],
   butter:      ["butter", "makkhan"],
+  fish:        ["fish", "machli", "mach", "pomfret", "rohu", "hilsa", "tilapia", "salmon", "tuna", "cod", "sea bass"],
+  shrimp:      ["shrimp", "prawn", "prawns", "jhinga", "chingri"],
 };
 
 const RECIPE_TEMPLATES: RecipeTemplate[] = [
@@ -601,6 +603,68 @@ const RECIPE_TEMPLATES: RecipeTemplate[] = [
     ],
     uses: ["coriander", "lemon", "green_chili"],
     cookTime: "2 mins", difficulty: "Easy",
+  },
+  // ── Fish ────────────────────────────────────────────────────────────────────
+  {
+    name: "Fish Curry (Machli Masala)",
+    description: "Tender fish pieces simmered in a bold onion-tomato-coconut masala. A staple in Indian coastal homes.",
+    baseIngredients: ["fish fillets", "onion", "tomatoes", "ginger-garlic paste", "coconut milk", "garam masala"],
+    steps: [
+      "Clean and cut fish into medium pieces. Marinate with turmeric, chili powder, and salt for 15 minutes.",
+      "Heat oil in a pan. Sauté onions until golden, then add ginger-garlic paste and cook 2 minutes.",
+      "Add pureed tomatoes, coriander powder, cumin, and garam masala. Cook until oil separates.",
+      "Pour in coconut milk and ½ cup water. Bring to a gentle simmer.",
+      "Slide in the marinated fish pieces. Cover and cook on low heat for 8–10 minutes — do not stir, just shake the pan.",
+      "Garnish with fresh coriander and serve with steamed rice.",
+    ],
+    uses: ["fish", "onion", "tomato"],
+    cookTime: "30 mins", difficulty: "Medium",
+  },
+  {
+    name: "Pan-Fried Masala Fish (Tawa Machli)",
+    description: "Crispy fish fillets coated in a spiced besan crust and pan-fried to perfection. Ready in 15 minutes.",
+    baseIngredients: ["fish fillets", "besan", "turmeric", "red chili powder", "cumin", "lemon", "oil"],
+    steps: [
+      "Mix besan, turmeric, red chili powder, cumin, and salt in a bowl.",
+      "Squeeze lemon juice over clean fish fillets and coat with the spice mixture.",
+      "Heat oil generously in a flat pan on medium-high heat.",
+      "Place fish fillets and fry for 4–5 minutes without moving them — let a crust form.",
+      "Flip carefully and fry the other side for another 3–4 minutes until golden and crispy.",
+      "Serve hot with sliced onion rings, green chutney, and lemon wedges.",
+    ],
+    uses: ["fish", "lemon"],
+    cookTime: "15 mins", difficulty: "Easy",
+  },
+  {
+    name: "Fish Biryani",
+    description: "Fragrant basmati rice layered with spiced fish and fried onions. A showstopper one-pot meal.",
+    baseIngredients: ["fish fillets", "basmati rice", "onion", "curd", "whole spices", "saffron", "ginger-garlic paste"],
+    steps: [
+      "Marinate fish in curd, ginger-garlic paste, turmeric, and biryani masala for 30 minutes.",
+      "Parboil basmati rice with whole spices until 70% cooked. Drain and set aside.",
+      "Fry thinly sliced onions in oil until deep golden and crispy. Remove and set aside.",
+      "In the same pot, sear the marinated fish for 3–4 minutes per side.",
+      "Layer the parboiled rice over the fish. Top with fried onions and saffron milk.",
+      "Seal the pot with a tight lid and cook on low heat (dum) for 20 minutes. Gently mix before serving.",
+    ],
+    uses: ["fish", "onion", "curd"],
+    cookTime: "60 mins", difficulty: "Medium",
+  },
+  // ── Prawns ──────────────────────────────────────────────────────────────────
+  {
+    name: "Prawn Masala (Jhinga Curry)",
+    description: "Juicy prawns cooked in a spicy onion-tomato masala with coastal Indian spices.",
+    baseIngredients: ["prawns", "onion", "tomatoes", "ginger-garlic paste", "garam masala", "curry leaves", "oil"],
+    steps: [
+      "Clean and devein prawns. Marinate with turmeric, chili powder, and salt for 10 minutes.",
+      "Heat oil in a pan. Add curry leaves and sauté onions until golden.",
+      "Add ginger-garlic paste and cook 2 minutes. Add tomatoes and all spices — cook until oil separates.",
+      "Add the marinated prawns and stir to coat in the masala.",
+      "Cook on medium-high heat for 5–6 minutes — prawns are done when they curl and turn pink.",
+      "Garnish with coriander and serve with rice, naan, or appam.",
+    ],
+    uses: ["shrimp", "onion", "tomato"],
+    cookTime: "20 mins", difficulty: "Easy",
   },
   // ── Default fallbacks ────────────────────────────────────────────────────────
   {
