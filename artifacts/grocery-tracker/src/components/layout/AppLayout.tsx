@@ -1,7 +1,8 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
-import { Home, ChefHat, BarChart3, Leaf, MessageCircle } from "lucide-react";
+import { Home, ChefHat, BarChart3, Leaf, MessageCircle, LogOut, ChevronDown } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -9,6 +10,7 @@ interface AppLayoutProps {
 
 export function AppLayout({ children }: AppLayoutProps) {
   const [location] = useLocation();
+  const { user, activeFridge, logout } = useAuth();
 
   const navItems = [
     { href: "/", label: "My Fridge", icon: Home },
@@ -48,11 +50,31 @@ export function AppLayout({ children }: AppLayoutProps) {
           })}
         </nav>
 
-        <div className="mt-auto">
-          <div className="bg-gradient-to-br from-accent to-emerald-50 rounded-2xl p-5 border border-primary/10">
-            <h3 className="font-display font-semibold text-primary mb-1">Zero Waste Goal</h3>
-            <p className="text-sm text-muted-foreground">You saved 3 meals this week!</p>
-          </div>
+        <div className="mt-auto space-y-3">
+          {/* Active fridge indicator */}
+          {activeFridge && (
+            <div className="bg-gradient-to-br from-accent to-emerald-50 rounded-2xl p-4 border border-primary/10">
+              <p className="text-xs text-muted-foreground font-medium mb-1">Active Fridge</p>
+              <p className="font-semibold text-foreground flex items-center gap-2">
+                <span>{activeFridge.icon}</span> {activeFridge.name}
+              </p>
+            </div>
+          )}
+          {/* User + logout */}
+          {user && (
+            <div className="flex items-center gap-3 px-2 py-2">
+              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm shrink-0">
+                {user.name[0]?.toUpperCase()}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-foreground truncate">{user.name}</p>
+                <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+              </div>
+              <button onClick={logout} title="Sign out" className="text-muted-foreground hover:text-destructive transition-colors p-1">
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
+          )}
         </div>
       </aside>
 
