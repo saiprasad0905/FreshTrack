@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
-import { Home, ChefHat, BarChart3, Leaf } from "lucide-react";
+import { Home, ChefHat, BarChart3, Leaf, MessageCircle } from "lucide-react";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -14,6 +14,7 @@ export function AppLayout({ children }: AppLayoutProps) {
     { href: "/", label: "My Fridge", icon: Home },
     { href: "/recipes", label: "AI Recipes", icon: ChefHat },
     { href: "/analytics", label: "Impact", icon: BarChart3 },
+    { href: "/expiry-chat", label: "Expiry Guide", icon: MessageCircle },
   ];
 
   return (

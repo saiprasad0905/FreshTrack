@@ -6,6 +6,7 @@ import NotFound from "@/pages/not-found";
 import { Dashboard } from "@/pages/Dashboard";
 import { Recipes } from "@/pages/Recipes";
 import { Analytics } from "@/pages/Analytics";
+import { ExpiryChat } from "@/pages/ExpiryChat";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -22,6 +23,7 @@ function Router() {
       <Route path="/" component={Dashboard} />
       <Route path="/recipes" component={Recipes} />
       <Route path="/analytics" component={Analytics} />
+      <Route path="/expiry-chat" component={ExpiryChat} />
       <Route component={NotFound} />
     </Switch>
   );
